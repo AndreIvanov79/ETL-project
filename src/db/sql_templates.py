@@ -1,3 +1,4 @@
+# === CREATE TABLES ===
 
 CREATE_COUNTRY_TABLE = """
     CREATE TABLE IF NOT EXISTS country (
@@ -90,68 +91,6 @@ CREATE_ETL_ERRORS_TABLE = """
     )
 """
 
-# Data insertion templates
-INSERT_API_LOG = """
-    INSERT INTO api_import_log 
-    (id, country_id, api_id, start_time, end_time, code_response, error_messages)
-    VALUES (?, ?, ?, ?, ?, ?, ?)
-"""
-
-INSERT_IMPORT_LOG = """
-    INSERT INTO import_log
-    (id, batch_date, country_id, import_directory_name, import_file_name, 
-    file_created_date, file_last_modified_date, row_count)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-"""
-
-INSERT_TRANSFORM_LOG = """
-    INSERT INTO transform_log 
-    VALUES (?, ?, ?, ?, ?, ?, ?)
-"""
-
-INSERT_WEATHER_DATA = """
-    INSERT INTO weather_data_import 
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-"""
-
-INSERT_COVID_DATA = """
-    INSERT INTO covid_19_data_import 
-    VALUES (?, ?, ?, ?, ?, ?)
-"""
-
-INSERT_ETL_ERROR = """
-    INSERT INTO etl_errors 
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-"""
-
-# Query templates
-GET_LATEST_WEATHER_DATA = """
-    SELECT * FROM weather_data_import 
-    WHERE country_id = ? 
-    ORDER BY date DESC 
-    LIMIT ?
-"""
-
-GET_COVID_DATA_BY_DATE_RANGE = """
-    SELECT * FROM covid_19_data_import 
-    WHERE country_id = ? 
-    AND date BETWEEN ? AND ?
-    ORDER BY date
-"""
-
-GET_COUNTRY_BY_NAME = """
-    SELECT id FROM country WHERE name = ?
-"""
-
-GET_MAX_API_LOG_ID = """
-    SELECT COALESCE(MAX(id), 0) FROM api_import_log
-"""
-
-GET_MAX_IMPORT_LOG_ID = """
-    SELECT COALESCE(MAX(id), 0) FROM import_log
-"""
-
-# Additional templates for the DataTransformer class
 CREATE_TEMP_WEATHER_TABLE = """
     CREATE TEMP TABLE IF NOT EXISTS temp_weather_data (
         id VARCHAR,
@@ -181,8 +120,44 @@ CREATE_TEMP_COVID_TABLE = """
     )
 """
 
-CLEAR_TEMP_TABLE = """
-    DELETE FROM {}
+DROP_TEMP_WEATHER_TABLE = "DROP TABLE IF EXISTS temp_weather_data"
+DROP_TEMP_COVID_TABLE = "DROP TABLE IF EXISTS temp_covid_data"
+
+# === INSERT DATA ===
+
+INSERT_API_LOG = """
+    INSERT INTO api_import_log 
+    (id, country_id, api_id, start_time, end_time, code_response, error_messages)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
+"""
+
+INSERT_IMPORT_LOG = """
+    INSERT INTO import_log
+    (id, batch_date, country_id, import_directory_name, import_file_name, 
+     file_created_date, file_last_modified_date, row_count)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+"""
+
+INSERT_TRANSFORM_LOG = """
+    INSERT INTO transform_log (
+        id, batch_date, country_id, processed_directory_name, 
+        processed_file_name, row_count, status
+    ) VALUES (?, ?, ?, ?, ?, ?, ?)
+"""
+
+INSERT_WEATHER_DATA = """
+    INSERT INTO weather_data_import 
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+"""
+
+INSERT_COVID_DATA = """
+    INSERT INTO covid_19_data_import 
+    VALUES (?, ?, ?, ?, ?, ?)
+"""
+
+INSERT_ETL_ERROR = """
+    INSERT INTO etl_errors 
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 """
 
 INSERT_TEMP_WEATHER_DATA = """
@@ -195,34 +170,67 @@ INSERT_TEMP_COVID_DATA = """
     VALUES (?, ?, ?, ?, ?, ?)
 """
 
+# === SELECT QUERIES ===
+
+GET_LATEST_WEATHER_DATA = """
+    SELECT * FROM weather_data_import 
+    WHERE country_id = ? 
+    ORDER BY date DESC 
+    LIMIT ?
+"""
+
+GET_COVID_DATA_BY_DATE_RANGE = """
+    SELECT * FROM covid_19_data_import 
+    WHERE country_id = ? 
+    AND date BETWEEN ? AND ?
+    ORDER BY date
+"""
+
+GET_COUNTRY_BY_NAME = """
+    SELECT id FROM country WHERE name = ?
+"""
+
+GET_MAX_API_LOG_ID = """
+    SELECT COALESCE(MAX(id), 0) FROM api_import_log
+"""
+
+GET_MAX_IMPORT_LOG_ID = """
+    SELECT COALESCE(MAX(id), 0) FROM import_log
+"""
+
 GET_ALL_TRANSFORM_LOGS = """
-    SELECT * 
-    FROM transform_log 
+    SELECT * FROM transform_log 
     ORDER BY batch_date DESC
 """
 
 GET_ALL_WEATHER_DATA = """
-    SELECT * 
-    FROM weather_data_import 
+    SELECT * FROM weather_data_import 
     ORDER BY country_id, date
 """
 
 GET_WEATHER_DATA_BY_COUNTRY = """
-    SELECT * 
-    FROM weather_data_import 
+    SELECT * FROM weather_data_import 
     WHERE country_id = ? 
     ORDER BY date
 """
 
 GET_ALL_COVID_DATA = """
-    SELECT * 
-    FROM covid_19_data_import 
+    SELECT * FROM covid_19_data_import 
     ORDER BY country_id, date
 """
 
 GET_COVID_DATA_BY_COUNTRY = """
-    SELECT * 
-    FROM covid_19_data_import 
+    SELECT * FROM covid_19_data_import 
     WHERE country_id = ? 
     ORDER BY date
 """
+
+# === TEMPLATE GENERATOR ===
+
+CREATE_TEMP_TABLE = """
+    CREATE TEMP TABLE IF NOT EXISTS {table_name} (
+        {schema_sql}
+    )
+"""
+
+DROP_TEMP_TABLE = "DROP TABLE IF EXISTS {table_name}"

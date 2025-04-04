@@ -9,6 +9,7 @@ from directory_manager import DirectoryManager
 from api_client import ApiClient
 from data_processors import WeatherDataProcessor, CovidDataProcessor
 from extractors import WeatherExtractor, CovidExtractor
+from src.error_handling.error_handling import ErrorManager, ErrorSeverity, ErrorCode, ETLError
 
 
 class DataExtraction:
@@ -31,6 +32,8 @@ class DataExtraction:
         
         self.weather_extractor = WeatherExtractor(self.api_client, self.weather_processor, self.db_manager)
         self.covid_extractor = CovidExtractor(self.api_client, self.covid_processor, self.db_manager)
+        
+        self.error_manager = ErrorManager(logger=self.logger, db_connection=self.db_manager.get_connection())
     
     def extract_all_data(self):
         try:
@@ -49,6 +52,13 @@ class DataExtraction:
                 
         except Exception as e:
             self.logger.error(f"Error in data extraction process: {str(e)}")
+            self.error_manager.create_error(
+                code=ErrorCode.UNKNOWN_ERROR,
+                message=f"Unexpected error in data extraction process: {str(e)}",
+                severity=ErrorSeverity.CRITICAL,
+                component="DataExtraction.extract_all_data",
+                details={"exception": str(e)}
+            )
             traceback.print_exc()
             return False
         finally:
@@ -57,6 +67,20 @@ class DataExtraction:
     def close(self):
         if hasattr(self, 'db_manager'):
             self.db_manager.close()
+    
+    def log_error(self, code: ErrorCode, message: str, severity: ErrorSeverity, 
+                  component: str, source_file: str = None, record_id: str = None, 
+                  details: dict = None):
+        """Log an error using the ErrorManager"""
+        self.error_manager.create_error(
+            code=code,
+            message=message,
+            severity=severity,
+            component=component,
+            source_file=source_file,
+            record_id=record_id,
+            details=details
+        )
 
 if __name__ == "__main__":
     extractor = DataExtraction()
