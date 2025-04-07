@@ -1,6 +1,6 @@
 from datetime import datetime
 import duckdb
-import logging
+from src.logging.logger import setup_logger
 import os
 from sqlglot import parse_one, transpile
 from sqlglot.errors import ParseError
@@ -12,7 +12,6 @@ from src.util.config import Config
 class DBManager:
     def __init__(self, db_path=None, logger=None):
         self.db_path = db_path or Config.DB_PATH
-        self.logger = logger or logging.getLogger('etl_logger')
         self.conn = None
         self.api_log_id_counter = 1
         self.import_log_id_counter = 1
@@ -66,7 +65,9 @@ class DBManager:
                 "CREATE_TRANSFORM_LOG_TABLE",
                 "CREATE_WEATHER_DATA_IMPORT_TABLE",
                 "CREATE_COVID_19_DATA_IMPORT_TABLE",
-                "CREATE_ETL_ERRORS_TABLE"
+                "CREATE_ETL_ERRORS_TABLE",
+                "CREATE_WEATHER_DATA_TABLE",
+                "CREATE_COVID_19_DATA_TABLE"
             ]
 
             for template_name in table_templates:
@@ -362,6 +363,72 @@ class DBManager:
         except Exception as e:
             self.logger.error(f"Failed to insert into temporary weather data table: {str(e)}")
             raise
+
+    def load_weather_data_to_final(self, transform_id, country_id):
+        """Load data from weather_data_import to weather_data table"""
+        try:
+            if not self.conn:
+                if not self.connect():
+                    return False
+
+            self.execute_query(sql_templates.LOAD_WEATHER_DATA_FROM_IMPORT, [
+                transform_id,
+                country_id
+            ])
+            self.conn.commit()
+            return True
+        except Exception as e:
+            self.logger.error(f"Error loading weather data to final table: {str(e)}")
+            return False
+
+    def load_covid_data_to_final(self, transform_id, country_id):
+        """Load data from covid_19_data_import to covid_19_data table"""
+        try:
+            if not self.conn:
+                if not self.connect():
+                    return False
+
+            self.execute_query(sql_templates.LOAD_COVID_DATA_FROM_IMPORT, [
+                transform_id,
+                country_id
+            ])
+            self.conn.commit()
+            return True
+        except Exception as e:
+            self.logger.error(f"Error loading COVID data to final table: {str(e)}")
+            return False
+
+    def get_latest_weather_data_from_final(self, country_id, limit=10):
+        """Get latest weather data from the final weather_data table"""
+        try:
+            if not self.conn:
+                if not self.connect():
+                    return None
+
+            result = self.execute_query(
+                sql_templates.GET_LATEST_WEATHER_DATA_FROM_FINAL, 
+                [country_id, limit]
+            ).fetchall()
+            return result
+        except Exception as e:
+            self.logger.error(f"Error getting latest weather data from final table: {str(e)}")
+            return None
+
+    def get_covid_data_by_date_range_from_final(self, country_id, start_date, end_date):
+        """Get covid data from the final covid_19_data table within a date range"""
+        try:
+            if not self.conn:
+                if not self.connect():
+                    return None
+
+            result = self.execute_query(
+                sql_templates.GET_COVID_DATA_BY_DATE_RANGE_FROM_FINAL, 
+                [country_id, start_date, end_date]
+            ).fetchall()
+            return result
+        except Exception as e:
+            self.logger.error(f"Error getting COVID data by date range from final table: {str(e)}")
+            return None
 
     def close(self):
         if self.conn:

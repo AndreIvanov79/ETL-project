@@ -234,3 +234,132 @@ CREATE_TEMP_TABLE = """
 """
 
 DROP_TEMP_TABLE = "DROP TABLE IF EXISTS {table_name}"
+
+# === CREATE NEW TABLES ===
+
+CREATE_WEATHER_DATA_TABLE = """
+    CREATE TABLE IF NOT EXISTS weather_data (
+        id VARCHAR PRIMARY KEY,
+        country_id VARCHAR,
+        date DATE,
+        tavg FLOAT,
+        tmin FLOAT,
+        tmax FLOAT,
+        prcp FLOAT,
+        snow FLOAT,
+        wdir FLOAT,
+        wspd FLOAT,
+        wpgt FLOAT,
+        pres FLOAT,
+        tsun FLOAT,
+        created_at TIMESTAMP,
+        updated_at TIMESTAMP,
+        last_etl_upd VARCHAR
+    )
+"""
+
+CREATE_COVID_19_DATA_TABLE = """
+    CREATE TABLE IF NOT EXISTS covid_19_data (
+        id VARCHAR PRIMARY KEY,
+        country_id VARCHAR,
+        date DATE,
+        cases INTEGER,
+        deaths INTEGER,
+        recovered INTEGER,
+        created_at TIMESTAMP,
+        updated_at TIMESTAMP,
+        last_etl_upd VARCHAR
+    )
+"""
+
+# === INSERT INTO NEW TABLES ===
+
+INSERT_WEATHER_DATA_TABLE = """
+    INSERT INTO weather_data
+    (id, country_id, date, tavg, tmin, tmax, prcp, snow, wdir, wspd, wpgt, pres, tsun, created_at, updated_at, last_etl_upd)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+"""
+
+INSERT_COVID_DATA_TABLE = """
+    INSERT INTO covid_19_data
+    (id, country_id, date, cases, deaths, recovered, created_at, updated_at, last_etl_upd)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+"""
+
+# === LOAD DATA FROM IMPORT TABLES TO FINAL TABLES ===
+
+LOAD_WEATHER_DATA_FROM_IMPORT = """
+    INSERT INTO weather_data
+    (id, country_id, date, tavg, tmin, tmax, prcp, snow, wdir, wspd, wpgt, pres, tsun, created_at, updated_at, last_etl_upd)
+    SELECT 
+        id, 
+        country_id, 
+        date, 
+        tavg, 
+        tmin, 
+        tmax, 
+        prcp, 
+        snow, 
+        wdir, 
+        wspd, 
+        wpgt, 
+        pres, 
+        tsun,
+        CURRENT_TIMESTAMP AS created_at,
+        CURRENT_TIMESTAMP AS updated_at,
+        ? AS last_etl_upd
+    FROM weather_data_import
+    WHERE country_id = ?
+    ON CONFLICT (id) DO UPDATE SET
+        tavg = EXCLUDED.tavg,
+        tmin = EXCLUDED.tmin,
+        tmax = EXCLUDED.tmax,
+        prcp = EXCLUDED.prcp,
+        snow = EXCLUDED.snow,
+        wdir = EXCLUDED.wdir,
+        wspd = EXCLUDED.wspd,
+        wpgt = EXCLUDED.wpgt,
+        pres = EXCLUDED.pres,
+        tsun = EXCLUDED.tsun,
+        updated_at = CURRENT_TIMESTAMP,
+        last_etl_upd = EXCLUDED.last_etl_upd
+"""
+
+LOAD_COVID_DATA_FROM_IMPORT = """
+    INSERT INTO covid_19_data
+    (id, country_id, date, cases, deaths, recovered, created_at, updated_at, last_etl_upd)
+    SELECT 
+        id, 
+        country_id, 
+        date, 
+        cases, 
+        deaths, 
+        recovered,
+        CURRENT_TIMESTAMP AS created_at,
+        CURRENT_TIMESTAMP AS updated_at,
+        ? AS last_etl_upd
+    FROM covid_19_data_import
+    WHERE country_id = ?
+    ON CONFLICT (id) DO UPDATE SET
+        cases = EXCLUDED.cases,
+        deaths = EXCLUDED.deaths,
+        recovered = EXCLUDED.recovered,
+        updated_at = CURRENT_TIMESTAMP,
+        last_etl_upd = EXCLUDED.last_etl_upd
+"""
+
+# === SELECT QUERIES FOR NEW TABLES ===
+
+GET_LATEST_WEATHER_DATA_FROM_FINAL = """
+    SELECT * FROM weather_data
+    WHERE country_id = ?
+    ORDER BY date DESC
+    LIMIT ?
+"""
+
+GET_COVID_DATA_BY_DATE_RANGE_FROM_FINAL = """
+    SELECT * FROM covid_19_data
+    WHERE country_id = ?
+    AND date BETWEEN ? AND ?
+    ORDER BY date
+"""

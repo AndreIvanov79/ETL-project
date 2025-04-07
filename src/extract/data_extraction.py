@@ -1,15 +1,24 @@
 import os
-import sys
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 import traceback
 from src.util.config import Config
 from src.logging.logger import setup_logger
 from src.db.db_manager import DBManager
+<<<<<<< Updated upstream
 from directory_manager import DirectoryManager
 from api_client import ApiClient
 from data_processors import WeatherDataProcessor, CovidDataProcessor
 from extractors import WeatherExtractor, CovidExtractor
+<<<<<<< Updated upstream
 from src.error_handling.error_handling import ErrorManager, ErrorSeverity, ErrorCode, ETLError
+=======
+=======
+from src.extract.directory_manager import DirectoryManager
+from src.extract.api_client import ApiClient
+from src.extract.data_processors import WeatherDataProcessor, CovidDataProcessor
+from src.extract.extractors import WeatherExtractor, CovidExtractor
+from src.error_handling.error_handling import ErrorManager, ErrorSeverity, ErrorCode, ETLError
+>>>>>>> Stashed changes
+>>>>>>> Stashed changes
 
 
 class DataExtraction:

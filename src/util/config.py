@@ -6,13 +6,15 @@ load_dotenv()
 
 class Config:
 
+    PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
     RAPIDAPI_KEY = os.getenv('RAPIDAPI_KEY', '')
     
     today = datetime.now()
     START_DATE = datetime(2022, today.month, today.day)
     END_DATE = datetime(2022, today.month, today.day)
     
-    DB_PATH = '../../etl_data.duckdb'
+    DB_PATH = os.getenv('DB_PATH', os.path.join(PROJECT_ROOT, 'etl_data.duckdb'))
     
     DATA_DIR = 'data'
     

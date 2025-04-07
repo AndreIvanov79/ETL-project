@@ -3,7 +3,7 @@ import json
 import glob
 from datetime import datetime
 from typing import List, Dict, Any, Optional, Tuple
-from data_validator import SchemaValidator, RequiredRule, DateFormatRule, NumericRangeRule, DataCleaner
+from src.transform.data_validator import SchemaValidator, RequiredRule, DateFormatRule, NumericRangeRule, DataCleaner
 from src.error_handling.error_handling import ErrorManager, ErrorCode, ErrorSeverity, ETLError
 from src.db.db_manager import DBManager
 from src.logging.logger import setup_logger
@@ -29,7 +29,7 @@ class CovidTransformer:
         self.validator.add_schema("covid", covid_schema)
 
     def transform(self, country: str, batch_date: datetime) -> int:
-        from transform_utils.covid_transform import transform_covid_batch
+        from src.transform.transform_utils.covid_transform import transform_covid_batch
         return transform_covid_batch(
             country=country,
             year_month=self.year_month,
@@ -41,7 +41,7 @@ class CovidTransformer:
         )
 
     def _process_complete_file(self, country: str, file_path: str, batch_date: datetime) -> int:
-        from transform_utils.covid_transform import process_covid_complete_file
+        from src.transform.transform_utils.covid_transform import process_covid_complete_file
         return process_covid_complete_file(
             country=country,
             file_path=file_path,

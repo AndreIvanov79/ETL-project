@@ -4,7 +4,7 @@ import json
 import uuid
 from datetime import datetime
 from typing import Any
-from data_validator import DataCleaner
+from src.transform.data_validator import DataCleaner
 from src.error_handling.error_handling import ErrorCode, ErrorSeverity
 
 def transform_weather_batch(country: str, year_month: str, batch_date: datetime, db_manager: Any, error_manager: Any, logger: Any, validator: Any) -> int:

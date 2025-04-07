@@ -1,6 +1,4 @@
 import os
-import sys
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 import json
 from datetime import datetime
 from src.logging.logger import setup_logger
@@ -11,9 +9,23 @@ from covid_transformer import CovidTransformer
 from weather_transformer import WeatherTransformer
 
 class CommonDataTransformer:
-    def __init__(self, db_path='../../etl_data.duckdb', logger=None):
+    def __init__(self, logger=None):
         self.logger = setup_logger()
-        self.db_manager = DBManager(db_path=db_path, logger=self.logger)
+        self.db_manager = DBManager(logger=self.logger)
+
+import json
+from datetime import datetime
+from src.logging.logger import setup_logger
+from src.transform.data_validator import SchemaValidator, RequiredRule, DateFormatRule, NumericRangeRule
+from src.error_handling.error_handling import ErrorManager
+from src.db.db_manager import DBManager
+from src.transform.covid_transformer import CovidTransformer
+from src.transform.weather_transformer import WeatherTransformer
+
+class CommonDataTransformer:
+    def __init__(self, logger=None):
+        self.logger = setup_logger()
+        self.db_manager = DBManager(logger=self.logger)
         self.conn = self.db_manager.get_connection()
         self.error_manager = ErrorManager(logger=self.logger, db_connection=self.conn)
 
