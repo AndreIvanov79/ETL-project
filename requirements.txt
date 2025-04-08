@@ -1,3 +1,10 @@
 python-dotenv
 requests
 duckdb
+numpy
+sqlglot
+streamlit
+matplotlib
+pytest
+pytest-mock
+pytest-cov

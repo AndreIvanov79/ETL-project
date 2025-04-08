@@ -1,14 +1,12 @@
 import os
-import sys
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 import traceback
 from src.util.config import Config
 from src.logging.logger import setup_logger
 from src.db.db_manager import DBManager
-from directory_manager import DirectoryManager
-from api_client import ApiClient
-from data_processors import WeatherDataProcessor, CovidDataProcessor
-from extractors import WeatherExtractor, CovidExtractor
+from src.extract.directory_manager import DirectoryManager
+from src.extract.api_client import ApiClient
+from src.extract.data_processors import WeatherDataProcessor, CovidDataProcessor
+from src.extract.extractors import WeatherExtractor, CovidExtractor
 from src.error_handling.error_handling import ErrorManager, ErrorSeverity, ErrorCode, ETLError
 
 
@@ -71,7 +69,6 @@ class DataExtraction:
     def log_error(self, code: ErrorCode, message: str, severity: ErrorSeverity, 
                   component: str, source_file: str = None, record_id: str = None, 
                   details: dict = None):
-        """Log an error using the ErrorManager"""
         self.error_manager.create_error(
             code=code,
             message=message,

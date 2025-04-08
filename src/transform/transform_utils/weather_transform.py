@@ -4,14 +4,14 @@ import json
 import uuid
 from datetime import datetime
 from typing import Any
-from data_validator import DataCleaner
+from src.transform.data_validator import DataCleaner
 from src.error_handling.error_handling import ErrorCode, ErrorSeverity
 
 def transform_weather_batch(country: str, year_month: str, batch_date: datetime, db_manager: Any, error_manager: Any, logger: Any, validator: Any) -> int:
     from src.db import sql_templates
 
     total_processed = 0
-    folder_path = os.path.join('..', 'extract', 'data', 'weather', country, year_month)
+    folder_path = os.path.join('src', 'extract', 'data', 'weather', '2020-2021', country, year_month)
 
     db_manager.execute_query(sql_templates.CREATE_TEMP_WEATHER_TABLE)
 
@@ -53,7 +53,6 @@ def transform_weather_batch(country: str, year_month: str, batch_date: datetime,
                     log_transform_error(transform_id, country_id, directory_name, file_name, f"INVALID_JSON: {str(e)}")
                     continue
 
-            # Определение даты
             if 'date' in data:
                 date_str = data['date']
                 try:

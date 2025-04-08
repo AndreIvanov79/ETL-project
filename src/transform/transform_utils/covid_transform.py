@@ -4,16 +4,15 @@ import json
 import uuid
 from datetime import datetime
 from typing import Any
-from data_validator import DataCleaner
+from src.transform.data_validator import DataCleaner
 from src.error_handling.error_handling import ErrorCode, ErrorSeverity
 
 def transform_covid_batch(country: str, year_month: str, batch_date: datetime, db_manager: Any, error_manager: Any, logger: Any, validator: Any) -> int:
     from src.db import sql_templates
     total_processed = 0
-    folder_path = os.path.join('..', 'extract', 'data', 'covid', country, year_month)
+    folder_path = os.path.join('src', 'extract', 'data', 'covid', '2020-2021', country, year_month)
 
     db_manager.execute_query(sql_templates.CREATE_TEMP_COVID_TABLE)
-
 
     def log_transform_error(transform_id, country_id, directory_name, file_name, status):
         db_manager.insert_transform_log(
@@ -33,6 +32,7 @@ def transform_covid_batch(country: str, year_month: str, batch_date: datetime, d
         return 0
 
     json_files = glob.glob(os.path.join(folder_path, '*.json'))
+
     if not json_files:
         transform_id = str(uuid.uuid4())
         country_id = db_manager.get_country_id(country)

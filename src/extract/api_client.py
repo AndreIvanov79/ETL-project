@@ -35,9 +35,11 @@ class ApiClient:
                 else:
                     error_message = response.text
                     self.logger.error(f"API call failed with status code {response.status_code}: {error_message}")
+
+                country_id = self.db.get_country_id(country)
                 
                 self.db.log_api_call(
-                    country,
+                    country_id,
                     api_id,
                     start_time,
                     end_time,
@@ -56,7 +58,7 @@ class ApiClient:
                 self.logger.error(f"Request error: {error_message}")
                 
                 self.db.log_api_call(
-                    country,
+                    country_id,
                     api_id,
                     start_time,
                     end_time,
