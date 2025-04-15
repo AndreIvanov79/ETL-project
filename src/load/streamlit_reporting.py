@@ -58,25 +58,23 @@ st.markdown("""
     .main {
         background-color: #f5f7f9;
     }
-    .stApp {
-        max-width: 1200px;
-        margin: 0 auto;
-    }
+   
     h1, h2, h3 {
         color: #0f4c75;
     }
+            
     .stTabs [data-baseweb="tab-list"] {
-        gap: 2px;
+        flex-wrap: wrap;
+        justify-content: space-between;
     }
     .stTabs [data-baseweb="tab"] {
-        height: 50px;
-        white-space: pre-wrap;
+        flex-grow: 1;
+        text-align: center;
+        min-width: 120px;
         background-color: #e8f1f5;
         border-radius: 4px 4px 0 0;
-        gap: 1px;
-        padding-top: 10px;
-        padding-bottom: 10px;
     }
+
     .stTabs [aria-selected="true"] {
         background-color: #3282b8;
         color: white;
@@ -514,7 +512,7 @@ def render_api_logs(data):
             code_stats, 
             x='Response code', 
             y='Quantity',
-            color='Цвет',
+            color='Color',
             color_discrete_map={
                 'green': '#4CAF50', 
                 'blue': '#2196F3', 
@@ -1016,7 +1014,7 @@ def render_correlation_analysis(weather_data, covid_data):
         margin-bottom: 20px;
         text-align: center;
     ">
-        <h3>Коэффициент корреляции</h3>
+        <h3>Correlation coefficient</h3>
         <div style="
             font-size: 36px; 
             font-weight: bold;

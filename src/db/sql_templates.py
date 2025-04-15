@@ -187,7 +187,7 @@ GET_COVID_DATA_BY_DATE_RANGE = """
 """
 
 GET_COUNTRY_BY_NAME = """
-    SELECT id FROM country WHERE name = ?
+    SELECT id FROM country WHERE LOWER(name) = ?
 """
 
 GET_MAX_API_LOG_ID = """
