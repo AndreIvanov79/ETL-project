@@ -8,3 +8,5 @@ matplotlib
 pytest
 pytest-mock
 pytest-cov
+joblib
+scikit-learn

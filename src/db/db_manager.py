@@ -583,27 +583,32 @@ class DBManager:
             return False
         
     def prepare_reporting_tables(self):
+       
         try:
+            for tbl in (
+                'reporting_weather_data',
+                'reporting_covid_19_data',
+                'reporting_api_import_log',
+                'reporting_import_log',
+                'reporting_transform_log'
+            ):
+                self.execute_query(f"DROP TABLE IF EXISTS {tbl}")
+
             self.execute_query(sql_templates.CREATE_REPORTING_WEATHER_DATA)
             self.execute_query(sql_templates.CREATE_REPORTING_COVID_DATA)
             self.execute_query(sql_templates.CREATE_REPORTING_API_LOG)
             self.execute_query(sql_templates.CREATE_REPORTING_IMPORT_LOG)
             self.execute_query(sql_templates.CREATE_REPORTING_TRANSFORM_LOG)
-            
-            self.execute_query(sql_templates.INSERT_REPORTING_WEATHER_DATA)
-            self.execute_query(sql_templates.INSERT_REPORTING_COVID_DATA)
-            
-            self.execute_query(sql_templates.INSERT_REPORTING_API_LOG)
-            self.execute_query(sql_templates.INSERT_REPORTING_IMPORT_LOG)
-            self.execute_query(sql_templates.INSERT_REPORTING_TRANSFORM_LOG)
-            
+
             self.conn.commit()
-            self.logger.info("Reporting tables created and filled successfully.")
+            self.logger.info("Reporting tables recreated with country names.")
             return True
+
         except Exception as e:
             self.logger.error(f"Failed to prepare reporting tables: {e}")
             return False
-        
+
+
     def get_reporting_weather_data(self):
         try:
             if not self.conn:

@@ -463,8 +463,8 @@ def render_transform_logs(data):
                 )
                 
                 loss_df = merged_df[['date', 'import_count', 'transform_count', 'loss', 'loss_percent']]
-                loss_df.columns = ['Date', 'Imported', 'Transformed', 'Loss', '%\ loss']
-                loss_df['%\ loss'] = loss_df['%\ loss'].round(2)
+                loss_df.columns = ['Date', 'Imported', 'Transformed', 'Loss', '% loss']
+                loss_df['% loss'] = loss_df['% loss'].round(2)
                 
                 st.dataframe(loss_df)
                 
@@ -1111,56 +1111,6 @@ def render_correlation_analysis(weather_data, covid_data):
     })
     
     st.dataframe(stats_df)
-
-    st.subheader("Lag correlation")
-    st.info("Correlation analysis taking into account time shift (lag)")
-    
-    max_lag = min(14, len(merged_df) // 2)
-    lag_days = st.slider("Quantity of days of lag (shift):", 0, max_lag, 0)
-    
-    if lag_days > 0:
-        lagged_df = merged_df.copy()
-        lagged_df[f'{covid_col}_lagged'] = lagged_df[covid_col].shift(-lag_days)
-        
-        lagged_df = lagged_df.dropna()
-        
-        if not lagged_df.empty:
-            lag_correlation = lagged_df[weather_col].corr(lagged_df[f'{covid_col}_lagged'])
-            
-            lag_corr_color = 'green' if abs(lag_correlation) > 0.7 else ('orange' if abs(lag_correlation) > 0.3 else 'red')
-            
-            st.markdown(f"""
-            <div style="
-                padding: 20px; 
-                border-radius: 10px; 
-                background-color: #f1f1f1; 
-                margin-bottom: 20px;
-                text-align: center;
-            ">
-                <h3>Lag correlation (shift {lag_days} days)</h3>
-                <div style="
-                    font-size: 36px; 
-                    font-weight: bold;
-                    color: {lag_corr_color};
-                ">
-                    {lag_correlation:.3f}
-                </div>
-                <p>Between {weather_col} and {covid_col} with a lag of {lag_days} days</p>
-            </div>
-            """, unsafe_allow_html=True)
-            
-            fig = px.scatter(
-                lagged_df, 
-                x=weather_col, 
-                y=f'{covid_col}_lagged',
-                trendline="ols",
-                labels={weather_col: weather_col, f'{covid_col}_lagged': f'{covid_col} (lag {lag_days} days)'},
-                title=f"Dependence of {covid_col} on {weather_col} with a lag of {lag_days} days"
-            )
-            
-            st.plotly_chart(fig, use_container_width=True)
-        else:
-            st.warning(f"Not enough data for analysis with a lag of {lag_days} days")
 
 def render_prediction_interface():
     from src.predictor.covid_predictor import predict_cases

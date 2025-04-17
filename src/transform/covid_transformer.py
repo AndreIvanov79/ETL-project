@@ -31,7 +31,8 @@ class CovidTransformer:
         from src.transform.transform_utils.covid_transform import transform_covid_batch
 
         total = 0
-        base_dir = os.path.join('src', 'extract', 'data', 'covid', '2020-2021', country)
+        base_dir = os.path.join('src', 'extract', 'data', 'covid', country)
+        
         if not os.path.exists(base_dir):
             self.logger.info(f"No base directory for COVID data: {base_dir}")
             return 0
