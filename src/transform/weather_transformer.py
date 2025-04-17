@@ -38,7 +38,8 @@ class WeatherTransformer:
         from src.transform.transform_utils.weather_transform import transform_weather_batch
 
         total = 0
-        base_dir = os.path.join('src', 'extract', 'data', 'weather', '2020-2021', country)
+        base_dir = os.path.join('src', 'extract', 'data', 'weather', country)
+        
         if not os.path.exists(base_dir):
             self.logger.info(f"No base directory for Weather data: {base_dir}")
             return 0

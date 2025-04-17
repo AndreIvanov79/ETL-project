@@ -1162,9 +1162,22 @@ def render_correlation_analysis(weather_data, covid_data):
         else:
             st.warning(f"Not enough data for analysis with a lag of {lag_days} days")
 
+def render_prediction_interface():
+    from src.predictor.covid_predictor import predict_cases
+    st.header("Prediction of COVID-19 Cases Based on Weather")
+
+    tavg = st.slider("Average Temperature (°C)", -30.0, 50.0, 15.0)
+    prcp = st.slider("Precipitation (mm)", 0.0, 100.0, 10.0)
+    pressure = st.slider("Pressure (hPa)", 800.0, 1100.0, 1013.25)
+
+    if st.button("Predict"):
+        result = predict_cases("covid_model.pkl", tavg, prcp, pressure)
+        st.success(f"Predicted number of cases: {int(result)}")
+
+
 # === MAIN APP ===
 def main():
-    st.sidebar.title("Настройки")
+    st.sidebar.title("Settings")
     
     st.sidebar.subheader("Information about data:")
     st.sidebar.markdown(f"**Data folder 1:** `{DATA_DIR}`")
@@ -1183,7 +1196,8 @@ def main():
         "API",
         "Weather",
         "COVID-19",
-        "Correlation"
+        "Correlation",
+        "AI Prediction"
     ])
     
     with tabs[0]:
@@ -1270,6 +1284,8 @@ def main():
             render_correlation_analysis(data["reporting_weather_data"], data["reporting_covid_19_data"])
         else:
             st.warning("Weather and COVID-19 data needed for correlation analysis")
+    with tabs[7]:
+        render_prediction_interface()
 
 if __name__ == "__main__":
     main()

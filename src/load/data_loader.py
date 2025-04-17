@@ -37,12 +37,13 @@ def save_json(filepath, headers, rows):
     print(f"JSON file saved: {filepath}")
 
 def get_column_names(table_name):
-    conn = db.get_connection()
-    cursor = conn.cursor()
     
     try:
-        db.execute_query(f"SELECT * FROM {table_name} LIMIT 1")
-        return [desc[0] for desc in cursor.description]
+        rel = db.execute_query(f"SELECT * FROM {table_name} LIMIT 1")
+        desc = getattr(rel, 'description', None)
+        if desc:
+            return [col[0] for col in desc]
+        raise Exception("No description available")
     except Exception as e:
         print(f"Error getting table structure {table_name}: {e}")
         
@@ -51,16 +52,17 @@ def get_column_names(table_name):
         elif table_name == "reporting_covid_19_data":
             return ["country_id", "date", "cases"]
         elif table_name == "reporting_transform_log":
-            return ["id", "batch_date", "country_id", "processed_directory_name", 
+            return ["id", "batch_date", "country_id", "processed_directory_name",
                     "processed_file_name", "row_count", "status"]
         elif table_name == "reporting_import_log":
-            return ["id", "batch_date", "country_id", "import_directory_name", 
+            return ["id", "batch_date", "country_id", "import_directory_name",
                     "import_file_name", "file_created_date", "file_last_modified_date", "row_count"]
         elif table_name == "reporting_api_import_log":
-            return ["id", "country_id", "api_id", "start_time", "end_time", 
+            return ["id", "country_id", "api_id", "start_time", "end_time",
                     "code_response", "error_messages"]
         else:
             return []
+
 
 def process_table_data(table_name, rows):
     processed_rows = []

@@ -125,6 +125,8 @@ DROP_TEMP_COVID_TABLE = "DROP TABLE IF EXISTS temp_covid_data"
 
 # === INSERT DATA ===
 
+INSERT_COUNTRY = "INSERT INTO country (id, code, name) VALUES (?, ?, ?) ON CONFLICT (id) DO NOTHING"
+
 INSERT_API_LOG = """
     INSERT INTO api_import_log 
     (id, country_id, api_id, start_time, end_time, code_response, error_messages)
@@ -397,3 +399,16 @@ GET_REPORTING_TRANSFORM_LOG = "SELECT * FROM reporting_transform_log"
 GET_REPORTING_IMPORT_LOG = "SELECT * FROM reporting_import_log"
 
 GET_REPORTING_API_IMPORT_LOG = "SELECT * FROM reporting_api_import_log"
+
+GET_COVID_WEATHER_FOR_TRAINING = """
+            SELECT 
+                w.country_id,
+                w.date,
+                w.tavg, w.prcp, w.pres,
+                c.cases
+            FROM reporting_weather_data w
+            JOIN reporting_covid_19_data c
+                ON w.country_id = c.country_id AND w.date = c.date
+            WHERE w.tavg IS NOT NULL AND w.prcp IS NOT NULL 
+                AND w.pres IS NOT NULL AND c.cases IS NOT NULL
+        """

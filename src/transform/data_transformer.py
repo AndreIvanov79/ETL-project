@@ -1,4 +1,5 @@
 import os
+import shutil
 import json
 from datetime import datetime
 from src.logging.logger import setup_logger
@@ -8,8 +9,10 @@ from src.db.db_manager import DBManager
 from src.transform.covid_transformer import CovidTransformer
 from src.transform.weather_transformer import WeatherTransformer
 
+RAW_DATA_DIR = os.path.join('src', 'extract', 'data')
+
 class CommonDataTransformer:
-    def __init__(self,logger=None):
+    def __init__(self, logger=None):
         self.logger = setup_logger()
         self.db_manager = DBManager(logger=self.logger)
         self.conn = self.db_manager.get_connection()
@@ -63,8 +66,21 @@ class CommonDataTransformer:
 
 if __name__ == "__main__":
     transformer = CommonDataTransformer()
+    success = False
     try:
         results = transformer.transform_all()
         print("Transformation summary:", results)
+
+        if results.get('covid', 0) + results.get('weather', 0) > 0:
+            success = True
     finally:
         transformer.close()
+        if os.path.isdir(RAW_DATA_DIR):
+            try:
+                if success:
+                    shutil.rmtree(RAW_DATA_DIR)
+                    transformer.logger.info(f"Removed raw data directory: {RAW_DATA_DIR}")
+                else:
+                    transformer.logger.warning(f"Raw data directory retained for inspection: {RAW_DATA_DIR}")
+            except Exception as e:
+                transformer.logger.error(f"Error cleaning raw data directory: {e}")

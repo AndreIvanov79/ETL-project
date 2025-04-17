@@ -75,12 +75,12 @@ class DBManager:
 
             for i, (country_name, code) in enumerate(Config.COUNTRY_CODES.items(), 1):
                 self.execute_query(
-                    "INSERT INTO country (id, code, name) VALUES (?, ?, ?) ON CONFLICT (id) DO NOTHING",
+                    sql_templates.INSERT_COUNTRY,
                     [i, code, country_name]
                 )
 
-            max_api_id = self.conn.execute("SELECT COALESCE(MAX(id), 0) FROM api_import_log").fetchone()[0]
-            max_import_id = self.conn.execute("SELECT COALESCE(MAX(id), 0) FROM import_log").fetchone()[0]
+            max_api_id = self.conn.execute(sql_templates.GET_MAX_API_LOG_ID).fetchone()[0]
+            max_import_id = self.conn.execute(sql_templates.GET_MAX_IMPORT_LOG_ID).fetchone()[0]
 
             self.api_log_id_counter = max_api_id + 1
             self.import_log_id_counter = max_import_id + 1
@@ -613,7 +613,7 @@ class DBManager:
             result = self.execute_query(sql_templates.GET_REPORTING_WEATHER_DATA).fetchall()
             return result
         except Exception as e:
-            self.logger.error(f"Ошибка при получении данных из reporting_weather_data: {str(e)}")
+            self.logger.error(f"Error retrieving data from reporting_weather_data: {str(e)}")
             return []
 
     def get_reporting_covid_data(self):
@@ -625,7 +625,7 @@ class DBManager:
             result = self.execute_query(sql_templates.GET_REPORTING_COVID_19_DATA).fetchall()
             return result
         except Exception as e:
-            self.logger.error(f"Ошибка при получении данных из reporting_covid_19_data: {str(e)}")
+            self.logger.error(f"Error retrieving data from reporting_covid_19_data: {str(e)}")
             return []
 
     def get_reporting_transform_log(self):
@@ -637,7 +637,7 @@ class DBManager:
             result = self.execute_query(sql_templates.GET_REPORTING_TRANSFORM_LOG).fetchall()
             return result
         except Exception as e:
-            self.logger.error(f"Ошибка при получении данных из reporting_transform_log: {str(e)}")
+            self.logger.error(f"Error retrieving data from reporting_transform_log: {str(e)}")
             return []
 
     def get_reporting_import_log(self):
@@ -649,7 +649,7 @@ class DBManager:
             result = self.execute_query(sql_templates.GET_REPORTING_IMPORT_LOG).fetchall()
             return result
         except Exception as e:
-            self.logger.error(f"Ошибка при получении данных из reporting_import_log: {str(e)}")
+            self.logger.error(f"Error retrieving data from reporting_import_log: {str(e)}")
             return []
 
     def get_reporting_api_import_log(self):
@@ -661,8 +661,12 @@ class DBManager:
             result = self.execute_query(sql_templates.GET_REPORTING_API_IMPORT_LOG).fetchall()
             return result
         except Exception as e:
-            self.logger.error(f"Ошибка при получении данных из reporting_api_import_log: {str(e)}")
+            self.logger.error(f"Error retrieving data from reporting_api_import_log: {str(e)}")
             return []
+        
+    def get_covid_weather_for_training(self):
+        return self.execute_query(sql_templates.GET_COVID_WEATHER_FOR_TRAINING).fetchdf()
+
 
     def close(self):
         if self.conn:
