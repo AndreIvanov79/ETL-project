@@ -559,59 +559,48 @@ def render_api_logs(data):
 
 def render_weather_data(data):
     st.header("Weather data")
-    
     df = data["reporting_weather_data"].copy()
-    
     if 'date' in df.columns:
         df['date'] = pd.to_datetime(df['date'])
-    
+
+    if 'country' in df.columns and df['country'].nunique() > 1:
+        countries = sorted(df['country'].unique())
+        opts = ['total'] + countries
+        sel = st.selectbox("Select country:", opts, key="weather_country_selector")
+        if sel != 'total':
+            df = df[df['country'] == sel]
+    elif 'country_id' in df.columns and df['country_id'].nunique() > 1:
+        ids = sorted(df['country_id'].unique())
+        opts = ['total'] + ids
+        sel = st.selectbox("Select country_id:", opts, key="weather_country_selector")
+        if sel != 'total':
+            df = df[df['country_id'] == sel]
+
     col1, col2 = st.columns([3, 1])
-    
     with col1:
         if st.checkbox("Show weather data", value=True):
-            if 'country_id' in df.columns and df['country_id'].nunique() > 1:
-                countries = df['country_id'].unique()
-                selected_country = st.selectbox("Select country:", countries, key="weather_country_selector")
-                filtered_df = df[df['country_id'] == selected_country]
-            else:
-                filtered_df = df
-            
-            if 'date' in filtered_df.columns:
-                min_date = filtered_df['date'].min()
-                max_date = filtered_df['date'].max()
-                date_range = st.date_input(
-                    "Select date range:", 
-                    (min_date.date() if isinstance(min_date, pd.Timestamp) else min_date,
-                     max_date.date() if isinstance(max_date, pd.Timestamp) else max_date)
+            if 'date' in df.columns:
+                mn, mx = df['date'].min(), df['date'].max()
+                dr = st.date_input(
+                    "Select date range:",
+                    (mn.date(), mx.date()),
+                    key="weather_date_range"
                 )
-                
-                if isinstance(date_range, tuple) and len(date_range) == 2:
-                    filtered_df = filtered_df[
-                        (filtered_df['date'].dt.date >= date_range[0]) & 
-                        (filtered_df['date'].dt.date <= date_range[1])
-                    ]
-            
-            st.dataframe(filtered_df)
-    
+                if isinstance(dr, tuple) and len(dr) == 2:
+                    df = df[(df['date'].dt.date >= dr[0]) & (df['date'].dt.date <= dr[1])]
+            st.dataframe(df)
+
     with col2:
         st.subheader("Statistics")
-        
-        if 'tavg' in df.columns:
-            avg_temp = df['tavg'].mean()
-            max_temp = df['tavg'].max()
-            min_temp = df['tavg'].min()
-            
-            st.metric("Average temperature", f"{avg_temp:.1f}°C")
-            st.metric("Maximum temperature", f"{max_temp:.1f}°C") 
-            st.metric("Minimum temperature", f"{min_temp:.1f}°C")
-        
-        if 'prcp' in df.columns:
-            total_precip = df['prcp'].sum()
-            max_precip = df['prcp'].max()
-            
-            st.metric("Total precipitation", f"{total_precip:.1f} мм")
-            st.metric("Maximum amount of precipitation", f"{max_precip:.1f} мм")
-    
+        stats_df = df
+        if 'tavg' in stats_df.columns:
+            st.metric("Average temperature", f"{stats_df['tavg'].mean():.1f}°C")
+            st.metric("Maximum temperature", f"{stats_df['tavg'].max():.1f}°C")
+            st.metric("Minimum temperature", f"{stats_df['tavg'].min():.1f}°C")
+        if 'prcp' in stats_df.columns:
+            st.metric("Total precipitation", f"{stats_df['prcp'].sum():.1f} мм")
+            st.metric("Maximum precipitation", f"{stats_df['prcp'].max():.1f} мм")
+
     st.subheader("Temperature and precipitation dynamics")
     
     try:
@@ -747,62 +736,50 @@ def render_weather_data(data):
 
 def render_covid_data(data):
     st.header("COVID-19 data")
-    
     df = data["reporting_covid_19_data"].copy()
-    
     if 'date' in df.columns:
         df['date'] = pd.to_datetime(df['date'])
-    
+
+    if 'country' in df.columns and df['country'].nunique() > 1:
+        countries = sorted(df['country'].unique())
+        opts = ['total'] + countries
+        sel = st.selectbox("Select country:", opts, key="covid_country_selector")
+        if sel != 'total':
+            df = df[df['country'] == sel]
+    elif 'country_id' in df.columns and df['country_id'].nunique() > 1:
+        ids = sorted(df['country_id'].unique())
+        opts = ['total'] + ids
+        sel = st.selectbox("Select country_id:", opts, key="covid_country_selector")
+        if sel != 'total':
+            df = df[df['country_id'] == sel]
+
     col1, col2 = st.columns([3, 1])
-    
     with col1:
         if st.checkbox("Show COVID-19 data", value=True):
-            if 'country_id' in df.columns and df['country_id'].nunique() > 1:
-                countries = df['country_id'].unique()
-                selected_country = st.selectbox("Select country:", countries, key="covid_country_selector")
-                filtered_df = df[df['country_id'] == selected_country]
-            else:
-                filtered_df = df
-            
-            if 'date' in filtered_df.columns:
-                min_date = filtered_df['date'].min()
-                max_date = filtered_df['date'].max()
-                date_range = st.date_input(
-                    "Select date range for COVID-19:", 
-                    (min_date.date() if isinstance(min_date, pd.Timestamp) else min_date,
-                     max_date.date() if isinstance(max_date, pd.Timestamp) else max_date),
+            if 'date' in df.columns:
+                mn, mx = df['date'].min(), df['date'].max()
+                dr = st.date_input(
+                    "Select date range for COVID-19:",
+                    (mn.date(), mx.date()),
                     key="covid_date_range"
                 )
-                
-                if isinstance(date_range, tuple) and len(date_range) == 2:
-                    filtered_df = filtered_df[
-                        (filtered_df['date'].dt.date >= date_range[0]) & 
-                        (filtered_df['date'].dt.date <= date_range[1])
-                    ]
-            
-            st.dataframe(filtered_df)
-    
+                if isinstance(dr, tuple) and len(dr) == 2:
+                    df = df[(df['date'].dt.date >= dr[0]) & (df['date'].dt.date <= dr[1])]
+            st.dataframe(df)
+
     with col2:
         st.subheader("Statistics")
-        
-        if 'cases' in df.columns:
-            total_cases = df['cases'].sum()
-            max_daily_cases = df['cases'].max()
-            
-            st.metric("Total cases", f"{int(total_cases):,}")
-            st.metric("Maximum per day", f"{int(max_daily_cases):,}")
-        
-        if 'deaths' in df.columns:
-            total_deaths = df['deaths'].sum()
-            max_daily_deaths = df['deaths'].max()
-            
-            st.metric("Total deaths", f"{int(total_deaths):,}")
-            st.metric("Maximum deaths per day", f"{int(max_daily_deaths):,}")
-            
-            if 'cases' in df.columns and total_cases > 0:
-                mortality_rate = (total_deaths / total_cases) * 100
-                st.metric("Mortality", f"{mortality_rate:.2f}%")
-    
+        stats_df = df
+        if 'cases' in stats_df.columns:
+            st.metric("Total cases", f"{int(stats_df['cases'].sum()):,}")
+            st.metric("Maximum per day", f"{int(stats_df['cases'].max()):,}")
+        if 'deaths' in stats_df.columns:
+            st.metric("Total deaths", f"{int(stats_df['deaths'].sum()):,}")
+            st.metric("Max deaths per day", f"{int(stats_df['deaths'].max()):,}")
+            if 'cases' in stats_df and stats_df['cases'].sum() > 0:
+                rate = stats_df['deaths'].sum() / stats_df['cases'].sum() * 100
+                st.metric("Mortality rate", f"{rate:.2f}%")
+
     st.subheader("Dynamics of COVID-19 cases")
     
     try:
@@ -940,25 +917,39 @@ def render_covid_data(data):
     except Exception as e:
         st.error(f"Error while plotting trend chart: {e}")
 
+
 def render_correlation_analysis(weather_data, covid_data):
     st.header("Correlation analysis of data")
     
     weather_df = weather_data.copy()
     covid_df = covid_data.copy()
-    
-    if 'date' not in weather_df.columns or 'date' not in covid_df.columns:
-        st.error("The necessary data for correlation analysis are missing")
-        return
-    
-    weather_df['date'] = pd.to_datetime(weather_df['date'])
-    covid_df['date'] = pd.to_datetime(covid_df['date'])
-    
-    merged_df = pd.merge(weather_df, covid_df, on=['date', 'country_id'] if 'country_id' in weather_df.columns and 'country_id' in covid_df.columns else 'date', suffixes=('_weather', '_covid'))
-    
+
+    if 'date' in weather_df.columns:
+        weather_df['date'] = pd.to_datetime(weather_df['date'])
+    if 'date' in covid_df.columns:
+        covid_df['date'] = pd.to_datetime(covid_df['date'])
+
+    if 'country' in weather_df.columns and 'country' in covid_df.columns:
+        merged_df = pd.merge(weather_df, covid_df, on=['date','country'], suffixes=('_weather','_covid'))
+        country_col = 'country'
+    elif 'country_id' in weather_df.columns and 'country_id' in covid_df.columns:
+        merged_df = pd.merge(weather_df, covid_df, on=['date','country_id'], suffixes=('_weather','_covid'))
+        country_col = 'country_id'
+    else:
+        merged_df = pd.merge(weather_df, covid_df, on='date', suffixes=('_weather','_covid'))
+        country_col = None
+
     if merged_df.empty:
         st.warning("No overlapping data for correlation analysis")
         return
-    
+
+    if country_col and merged_df[country_col].nunique() > 1:
+        values = sorted(merged_df[country_col].unique())
+        opts = ['total'] + values
+        sel = st.selectbox("Select country for analysis:", opts, key="corr_country_selector")
+        if sel != 'total':
+            merged_df = merged_df[merged_df[country_col] == sel]
+
     st.subheader("Selecting parameters for analysis")
     
     col1, col2 = st.columns(2)
@@ -1022,7 +1013,7 @@ def render_correlation_analysis(weather_data, covid_data):
         ">
             {correlation:.3f}
         </div>
-        <p>Между {weather_col} и {covid_col}</p>
+        <p>Between {weather_col} и {covid_col}</p>
     </div>
     """, unsafe_allow_html=True)
     
@@ -1239,3 +1230,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+    
