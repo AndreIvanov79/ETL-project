@@ -4,7 +4,7 @@ CREATE_COUNTRY_TABLE = """
     CREATE TABLE IF NOT EXISTS country (
         id INTEGER PRIMARY KEY,
         code VARCHAR(2),
-        name VARCHAR(50)
+        name VARCHAR(50) NOT NULL UNIQUE
     )
 """
 
@@ -39,7 +39,7 @@ CREATE_TRANSFORM_LOG_TABLE = """
     CREATE TABLE IF NOT EXISTS transform_log (
         id VARCHAR PRIMARY KEY,
         batch_date TIMESTAMP,
-        country_id VARCHAR,
+        country_id INTEGER,
         processed_directory_name VARCHAR,
         processed_file_name VARCHAR,
         row_count INTEGER,
@@ -50,7 +50,7 @@ CREATE_TRANSFORM_LOG_TABLE = """
 CREATE_WEATHER_DATA_IMPORT_TABLE = """
     CREATE TABLE IF NOT EXISTS weather_data_import (
         id VARCHAR PRIMARY KEY,
-        country_id VARCHAR,
+        country_id INTEGER,
         date DATE,
         tavg FLOAT,
         tmin FLOAT,
@@ -68,7 +68,7 @@ CREATE_WEATHER_DATA_IMPORT_TABLE = """
 CREATE_COVID_19_DATA_IMPORT_TABLE = """
     CREATE TABLE IF NOT EXISTS covid_19_data_import (
         id VARCHAR PRIMARY KEY,
-        country_id VARCHAR,
+        country_id INTEGER,
         date DATE,
         cases INTEGER,
         deaths INTEGER,
@@ -125,6 +125,8 @@ DROP_TEMP_COVID_TABLE = "DROP TABLE IF EXISTS temp_covid_data"
 
 # === INSERT DATA ===
 
+INSERT_COUNTRY = "INSERT INTO country (id, code, name) VALUES (?, ?, ?) ON CONFLICT (id) DO NOTHING"
+
 INSERT_API_LOG = """
     INSERT INTO api_import_log 
     (id, country_id, api_id, start_time, end_time, code_response, error_messages)
@@ -172,11 +174,11 @@ INSERT_TEMP_COVID_DATA = """
 
 # === SELECT QUERIES ===
 
-GET_LATEST_WEATHER_DATA = """
+GET_WEATHER__DATA_BY_DATE_RANGE = """
     SELECT * FROM weather_data_import 
     WHERE country_id = ? 
-    ORDER BY date DESC 
-    LIMIT ?
+    AND date BETWEEN ? AND ?
+    ORDER BY date
 """
 
 GET_COVID_DATA_BY_DATE_RANGE = """
@@ -187,7 +189,7 @@ GET_COVID_DATA_BY_DATE_RANGE = """
 """
 
 GET_COUNTRY_BY_NAME = """
-    SELECT id FROM country WHERE name = ?
+    SELECT id FROM country WHERE LOWER(name) = ?
 """
 
 GET_MAX_API_LOG_ID = """
@@ -234,3 +236,214 @@ CREATE_TEMP_TABLE = """
 """
 
 DROP_TEMP_TABLE = "DROP TABLE IF EXISTS {table_name}"
+
+
+# === LOG DATA SELECTS ===
+
+# IMPORT LOG
+GET_ALL_IMPORT_LOGS = """
+    SELECT * FROM import_log ORDER BY batch_date DESC
+"""
+
+GET_IMPORT_LOGS_BY_DATE_RANGE = """
+    SELECT * FROM import_log
+    WHERE batch_date BETWEEN ? AND ?
+    ORDER BY batch_date DESC
+"""
+
+GET_IMPORT_LOGS_BY_COUNTRY = """
+    SELECT * FROM import_log
+    WHERE country_id = ?
+    ORDER BY batch_date DESC
+"""
+
+# API IMPORT LOG
+GET_ALL_API_LOGS = """
+    SELECT * FROM api_import_log ORDER BY start_time DESC
+"""
+
+GET_API_LOGS_BY_DATE_RANGE = """
+    SELECT * FROM api_import_log
+    WHERE start_time BETWEEN ? AND ?
+    ORDER BY start_time DESC
+"""
+
+GET_API_LOGS_BY_COUNTRY = """
+    SELECT * FROM api_import_log
+    WHERE country_id = ?
+    ORDER BY start_time DESC
+"""
+
+# TRANSFORM LOG
+GET_TRANSFORM_LOGS_BY_DATE_RANGE = """
+    SELECT * FROM transform_log
+    WHERE batch_date BETWEEN ? AND ?
+    ORDER BY batch_date DESC
+"""
+
+GET_TRANSFORM_LOGS_BY_COUNTRY = """
+    SELECT * FROM transform_log
+    WHERE country_id = ?
+    ORDER BY batch_date DESC
+"""
+# REPORTING TABLES
+CREATE_REPORTING_WEATHER_DATA = """
+    CREATE TABLE reporting_weather_data AS
+    SELECT
+        c.name AS country,
+        w.date,
+        w.tavg,
+        w.prcp,
+        w.pres,
+        w.tsun
+    FROM weather_data_import AS w
+    JOIN country AS c ON w.country_id = c.id
+"""
+
+CREATE_REPORTING_COVID_DATA = """
+    CREATE TABLE reporting_covid_19_data AS
+    SELECT
+        c.name AS country,
+        d.date,
+        d.cases
+    FROM covid_19_data_import AS d
+    JOIN country AS c ON d.country_id = c.id
+"""
+
+CREATE_REPORTING_API_LOG = """
+    CREATE TABLE reporting_api_import_log AS
+    SELECT
+        l.id,
+        c.name AS country,
+        l.api_id,
+        l.start_time,
+        l.end_time,
+        l.code_response,
+        l.error_messages
+    FROM api_import_log AS l
+    JOIN country AS c ON l.country_id = c.id
+"""
+
+CREATE_REPORTING_IMPORT_LOG = """
+    CREATE TABLE reporting_import_log AS
+    SELECT
+        l.id,
+        c.name AS country,
+        l.import_directory_name,
+        l.import_file_name,
+        l.file_created_date,
+        l.file_last_modified_date,
+        l.row_count
+    FROM import_log AS l
+    JOIN country AS c ON l.country_id = c.id
+"""
+
+CREATE_REPORTING_TRANSFORM_LOG = """
+    CREATE TABLE reporting_transform_log AS
+    SELECT
+        t.id,
+        c.name AS country,
+        t.processed_directory_name,
+        t.processed_file_name,
+        t.row_count,
+        t.status
+    FROM transform_log AS t
+    JOIN country AS c ON t.country_id = c.id
+"""
+
+INSERT_REPORTING_WEATHER_DATA = """
+    INSERT INTO reporting_weather_data (country_id, date, tavg, prcp, pres, tsun)
+    SELECT country_id, date, tavg, prcp, pres, tsun FROM weather_data_import
+"""
+
+INSERT_REPORTING_COVID_DATA = """
+    INSERT INTO reporting_covid_19_data (country_id, date, cases)
+    SELECT country_id, date, cases FROM covid_19_data_import
+"""
+
+# === REPORTING DATA SELECTION ===
+SELECT_DATA_FOR_REPORTING_WEATHER = """
+    SELECT country_id, date, tavg, prcp, pres, tsun 
+    FROM weather_data_import
+"""
+
+SELECT_DATA_FOR_REPORTING_COVID = """
+    SELECT country_id, date, cases 
+    FROM covid_19_data_import
+"""
+
+SELECT_DATA_FOR_REPORTING_API_LOG = """
+    SELECT * FROM api_import_log
+"""
+
+SELECT_DATA_FOR_REPORTING_IMPORT_LOG = """
+    SELECT * FROM import_log
+"""
+
+SELECT_DATA_FOR_REPORTING_TRANSFORM_LOG = """
+    SELECT * FROM transform_log
+"""
+
+# === REPORTING DATA INSERTION ===
+INSERT_DATA_INTO_REPORTING_WEATHER = """
+    INSERT INTO reporting_weather_data (country_id, date, tavg, prcp, pres, tsun)
+    VALUES (?, ?, ?, ?, ?, ?)
+"""
+
+INSERT_DATA_INTO_REPORTING_COVID = """
+    INSERT INTO reporting_covid_19_data (country_id, date, cases)
+    VALUES (?, ?, ?)
+"""
+
+INSERT_DATA_INTO_REPORTING_API_LOG = """
+    INSERT INTO reporting_api_import_log VALUES (?, ?, ?, ?, ?, ?, ?)
+"""
+
+INSERT_DATA_INTO_REPORTING_IMPORT_LOG = """
+    INSERT INTO reporting_import_log VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+"""
+
+INSERT_DATA_INTO_REPORTING_TRANSFORM_LOG = """
+    INSERT INTO reporting_transform_log VALUES (?, ?, ?, ?, ?, ?, ?)
+"""
+
+# === REPORTING TABLE INSERT FROM SELECT ===
+INSERT_REPORTING_API_LOG = """
+    INSERT INTO reporting_api_import_log SELECT * FROM api_import_log
+"""
+
+INSERT_REPORTING_IMPORT_LOG = """
+    INSERT INTO reporting_import_log SELECT * FROM import_log
+"""
+
+INSERT_REPORTING_TRANSFORM_LOG = """
+    INSERT INTO reporting_transform_log SELECT * FROM transform_log
+"""
+# === REPORTING TABLES QUERIES ===
+GET_REPORTING_WEATHER_DATA = "SELECT * FROM reporting_weather_data"
+
+GET_REPORTING_COVID_19_DATA = "SELECT * FROM reporting_covid_19_data"
+
+GET_REPORTING_TRANSFORM_LOG = "SELECT * FROM reporting_transform_log"
+
+GET_REPORTING_IMPORT_LOG = "SELECT * FROM reporting_import_log"
+
+GET_REPORTING_API_IMPORT_LOG = "SELECT * FROM reporting_api_import_log"
+
+GET_COVID_WEATHER_FOR_TRAINING = """
+    SELECT
+        w.date,
+        w.tavg,
+        w.prcp,
+        w.pres,
+        c.cases
+    FROM reporting_weather_data AS w
+    JOIN reporting_covid_19_data AS c
+      ON w.country = c.country
+     AND w.date    = c.date
+    WHERE w.tavg IS NOT NULL
+      AND w.prcp IS NOT NULL
+      AND w.pres IS NOT NULL
+      AND c.cases IS NOT NULL
+"""
+

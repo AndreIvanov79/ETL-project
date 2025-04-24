@@ -3,7 +3,7 @@ import json
 import glob
 from datetime import datetime
 from typing import List, Dict, Any, Optional, Tuple
-from data_validator import SchemaValidator, RequiredRule, DateFormatRule, NumericRangeRule, DataCleaner
+from src.transform.data_validator import SchemaValidator, RequiredRule, DateFormatRule, NumericRangeRule, DataCleaner
 from src.error_handling.error_handling import ErrorManager, ErrorCode, ErrorSeverity, ETLError
 from src.db.db_manager import DBManager
 from src.logging.logger import setup_logger
@@ -14,7 +14,6 @@ class WeatherTransformer:
         self.db_manager = db_manager
         self.error_manager = error_manager
         self.logger = setup_logger()
-        self.year_month = datetime(2022, datetime.now().month, datetime.now().day).strftime("%Y-%m")
         self._initialize_validators()
 
     def _initialize_validators(self):
@@ -36,19 +35,33 @@ class WeatherTransformer:
         self.validator.add_schema("weather", weather_schema)
 
     def transform(self, country: str, batch_date: datetime) -> int:
-        from transform_utils.weather_transform import transform_weather_batch
-        return transform_weather_batch(
-            country=country,
-            year_month=self.year_month,
-            batch_date=batch_date,
-            db_manager=self.db_manager,
-            error_manager=self.error_manager,
-            logger=self.logger,
-            validator=self.validator
-        )
+        from src.transform.transform_utils.weather_transform import transform_weather_batch
+
+        total = 0
+        base_dir = os.path.join('src', 'extract', 'data', 'weather', country)
+        
+        if not os.path.exists(base_dir):
+            self.logger.info(f"No base directory for Weather data: {base_dir}")
+            return 0
+
+        for year_month in sorted(os.listdir(base_dir)):
+            ym_path = os.path.join(base_dir, year_month)
+            if os.path.isdir(ym_path):
+                self.logger.info(f"Processing Weather data in directory: {ym_path}")
+                count = transform_weather_batch(
+                    country=country,
+                    year_month=year_month,
+                    batch_date=batch_date,
+                    db_manager=self.db_manager,
+                    error_manager=self.error_manager,
+                    logger=self.logger,
+                    validator=self.validator
+                )
+                total += count
+        return total
 
     def _process_complete_file(self, country: str, file_path: str, batch_date: datetime) -> int:
-        from transform_utils.weather_transform import process_weather_complete_file
+        from src.transform.transform_utils.weather_transform import process_weather_complete_file
         return process_weather_complete_file(
             country=country,
             file_path=file_path,
@@ -58,4 +71,3 @@ class WeatherTransformer:
             logger=self.logger,
             validator=self.validator
         )
-    

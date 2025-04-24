@@ -7,14 +7,21 @@ load_dotenv()
 class Config:
 
     RAPIDAPI_KEY = os.getenv('RAPIDAPI_KEY', '')
+
+    API_KEY = os.getenv('API_KEY', '')
+
+    PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     
     today = datetime.now()
     START_DATE = datetime(2022, today.month, today.day)
-    END_DATE = datetime(2022, today.month, today.day)
+    END_DATE = datetime(2022, today.month, today.day) 
+
+    TOTAL_START_DATE = datetime.strptime('2020-01-01', "%Y-%m-%d")
+    TOTAL_END_DATE = datetime.strptime('2021-01-01', "%Y-%m-%d")
     
-    DB_PATH = '../../etl_data.duckdb'
+    DB_PATH = os.getenv('DB_PATH', os.path.join(PROJECT_ROOT, 'etl_data.duckdb'))
     
-    DATA_DIR = 'data'
+    DATA_DIR = 'src/extract/data'
     
     MAX_RETRIES = 3
     RETRY_DELAY = 5  
